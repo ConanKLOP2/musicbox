@@ -12,19 +12,20 @@ import {faEllipsisVertical, faList, faPlay, faPlus, faTrashCan} from "@fortaweso
 import React from "react";
 import {setPlayer} from "@/redux/slices/player.slice";
 import {ItemType} from "antd/es/menu/hooks/useItems";
+import {removeFromHistory} from "@/redux/slices/app.slice";
 
 interface VerticalTracksListProps {
   tracks: YouTubeTrack[];
   showFavorite?: boolean;
+  editing?: boolean;
   optionItems?: ItemType[];
   style?: {};
 }
 
-export default function VerticalTracksList({tracks, showFavorite, optionItems, style}: VerticalTracksListProps) {
+export default function VerticalTracksList({ tracks, showFavorite, editing, optionItems, style }: VerticalTracksListProps) {
   const favoritePlaylist = useAppSelector(state => state.app.playlists.find(x => x.id === 'FAVORITE'));
   const favoriteTracks = favoritePlaylist?.tracks || [];
   const dispatch = useAppDispatch();
-
   return <List
     rootClassName={styles.searchResultsOuter}
     style={{minHeight: 0, ...style}}
@@ -58,68 +59,79 @@ export default function VerticalTracksList({tracks, showFavorite, optionItems, s
             </div>
           </div>
           <div className={styles.searchResultItemControls}>
-            {showFavorite && (
-              <Button
-                icon={isPrevFavorite ? <HeartFilled/> : <HeartOutlined/>}
-                shape={'circle'}
-                type={'text'}
-                onClick={async () => {
-                  try {
-                    if (isPrevFavorite) {
-                      await dispatch(removeTrackFromPlaylist({
-                        trackId: item.id,
-                        playlistId: 'FAVORITE'
-                      }));
-                    } else {
-                      await dispatch(addTrackToPlaylist({
-                        track: item,
-                        playlistId: 'FAVORITE'
-                      }))
-                    }
-                  } catch (e) {
-                    console.log(e);
-                  }
-                }}
-              />
-            )}
-            <div className={optionItems ? styles.itemRevealableControls: ''}>
-              <Tooltip title={'Play now'}>
-                <Button
-                  onClick={() => {
-                    dispatch(enqueueTrack({
-                      track: item,
-                      playNow: true,
-                      clearQueue: true,
-                    }));
-                  }}
-                  icon={<FontAwesomeIcon icon={faPlay}/>}
-                  shape={'circle'}
-                  type={'text'}
-                />
-              </Tooltip>
-              {optionItems && (
-                <Dropdown menu={{
-                  items: [
-                    ...optionItems.map((opt: any) => {
-                      return {
-                        ...opt,
-                        onClick: () => {
-                          if (opt && opt.onClick) opt.onClick(item);
-                        }
-                      }
-                    })
-                  ],
-                }} placement="bottomRight" arrow>
+            {!editing ?
+              (<>
+                {showFavorite && (
                   <Button
-                    icon={<FontAwesomeIcon icon={faEllipsisVertical}/>}
+                    icon={isPrevFavorite ? <HeartFilled/> : <HeartOutlined/>}
                     shape={'circle'}
                     type={'text'}
+                    onClick={async () => {
+                      try {
+                        if (isPrevFavorite) {
+                          await dispatch(removeTrackFromPlaylist({
+                            trackId: item.id,
+                            playlistId: 'FAVORITE'
+                          }));
+                        } else {
+                          await dispatch(addTrackToPlaylist({
+                            track: item,
+                            playlistId: 'FAVORITE'
+                          }))
+                        }
+                      } catch (e) {
+                        console.log(e);
+                      }
+                    }}
                   />
-                </Dropdown>
+                )}
+                <div className={optionItems ? styles.itemRevealableControls : ''}>
+                  <Tooltip title={'Play now'}>
+                    <Button
+                      onClick={() => {
+                        dispatch(enqueueTrack({
+                          track: item,
+                          playNow: true,
+                          clearQueue: true,
+                        }));
+                      }}
+                      icon={<FontAwesomeIcon icon={faPlay} />}
+                      shape={'circle'}
+                      type={'text'}
+                    />
+                  </Tooltip>
+                  {optionItems && (
+                    <Dropdown menu={{
+                      items: [
+                        ...optionItems.map((opt: any) => {
+                          return {
+                            ...opt,
+                            onClick: () => {
+                              if (opt && opt.onClick) opt.onClick(item);
+                            }
+                          }
+                        })
+                      ],
+                    }} placement="bottomRight" arrow>
+                      <Button
+                        icon={<FontAwesomeIcon icon={faEllipsisVertical} />}
+                        shape={'circle'}
+                        type={'text'}
+                      />
+                    </Dropdown>
+                  )}
+                </div></>)
+              : (
+                <Button type={'text'} danger onClick={() => {
+                  //Remove track from tracks list
+                  dispatch(removeFromHistory(item.id));
+                }}>
+                  <FontAwesomeIcon icon={faTrashCan} />
+                </Button>
               )}
-            </div>
           </div>
         </div>
-      </>}}
+      </>
+    }}
   />;
 }

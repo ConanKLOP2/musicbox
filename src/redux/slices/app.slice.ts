@@ -33,6 +33,9 @@ const appSlice = createSlice({
   name: 'app',
   initialState,
   reducers: {
+    removeFromHistory: (state, action: PayloadAction<string>) => {
+      state.playHistory = state.playHistory.filter(item => item.id !== action.payload);
+    },
     setApp(state, action: PayloadAction<Optional<AppSliceState>>) {
       state = {
         ...state,
@@ -75,6 +78,6 @@ const appSlice = createSlice({
   }
 });
 
-export const {setApp} = appSlice.actions;
+export const {setApp,removeFromHistory} = appSlice.actions;
 
 export default appSlice;
